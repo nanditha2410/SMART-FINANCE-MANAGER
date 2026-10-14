@@ -26,7 +26,8 @@ Encapsulation	Organize and manage transaction data
 Exception handling	Handle invalid amounts and inputs
 Date and time	Record transaction dates
 Modules	Organize and reuse code
-5.** How the Project Works**
+
+5.**How the Project Works**
 1. Enter Monthly Income and Budget
 2. Add Daily Expenses
 3. Calculate Total Expenses
