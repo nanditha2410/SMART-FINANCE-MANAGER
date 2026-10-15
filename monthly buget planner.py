@@ -1,472 +1,223 @@
-
-from datetime import datetime
-# =============== CUSTOM EXCEPTIONS ===============
-class InvalidAmountError(Exception):
-    pass
-# =============== BASE CLASS ===============
+# ========== SMART FINANCE MANAGER ==========
 class Transaction:
 
-    def __init__(self, amount, date, description):
-        if amount <= 0:
-            raise InvalidAmountError(
-                "Amount must be greater than zero."
-            )
-
+    def __init__(self, amount, category, description):
         self.amount = amount
-        self.date = date
+        self.category = category
         self.description = description
 
     def display(self):
-        print("Date:", self.date)
         print("Amount: Rs.", self.amount)
+        print("Category:", self.category)
         print("Description:", self.description)
 
 
-# =============== INCOME CLASS ===============
-
-class Income(Transaction):
-
-    def __init__(self, amount, date, description, source):
-        super().__init__(amount, date, description)
-        self.source = source
-
-    def display(self):
-        print("\n--- INCOME DETAILS ---")
-        super().display()
-        print("Source:", self.source)
-
-
-# =============== EXPENSE CLASS ===============
-
+# Child Class - Inheritance
 class Expense(Transaction):
 
-    def __init__(self, amount, date, description, category):
-        super().__init__(amount, date, description)
-        self.category = category
-
-    def display(self):
-        print("\n--- EXPENSE DETAILS ---")
-        super().display()
-        print("Category:", self.category)
+    def __init__(self, amount, category, description):
+        super().__init__(amount, category, description)
 
 
-# =============== FINANCE MANAGER ===============
-
+# Finance Manager Class
 class FinanceManager:
 
     def __init__(self):
         self.monthly_income = 0
-        self.transactions = []
-        self.category_budgets = {}
         self.monthly_budget = 0
-        self.savings_goal = 0
+        self.expenses = []
 
-    # ---------- INPUT VALIDATION ----------
-
-    def get_amount(self, message):
-        while True:
-            try:
-                amount = float(input(message))
-
-                if amount <= 0:
-                    raise InvalidAmountError(
-                        "Amount must be greater than zero."
-                    )
-
-                return amount
-
-            except ValueError:
-                print("Please enter a valid number.")
-
-            except InvalidAmountError as error:
-                print(error)
-
-    def get_date(self):
-        while True:
-            date = input(
-                "Enter date (YYYY-MM-DD), "
-                "or press Enter for today: "
-            ).strip()
-
-            if date == "":
-                return datetime.today().strftime("%Y-%m-%d")
-
-            try:
-                datetime.strptime(date, "%Y-%m-%d")
-                return date
-
-            except ValueError:
-                print("Invalid date. Try again.")
-
-    # ---------- MONTHLY INCOME ----------
-
+    # Set Monthly Income
     def set_income(self):
-        self.monthly_income = self.get_amount(
-            "Enter monthly income: Rs. "
-        )
-
-        print("Monthly income saved successfully.")
-
-    # ---------- ADD INCOME ----------
-
-    def add_income(self):
-        amount = self.get_amount(
-            "Enter additional income: Rs. "
-        )
-
-        date = self.get_date()
-        source = input("Enter income source: ").strip()
-        description = input("Enter description: ").strip()
-
-        if source == "":
-            print("Income source cannot be empty.")
-            return
-
         try:
-            income = Income(
-                amount, date, description, source
-            )
+            income = float(input("Enter monthly income: Rs. "))
 
-            self.transactions.append(income)
-            print("Income added successfully.")
+            if income > 0:
+                self.monthly_income = income
+                print("Income saved successfully!")
+            else:
+                print("Income must be greater than zero.")
 
-        except InvalidAmountError as error:
-            print(error)
+        except ValueError:
+            print("Enter a valid amount.")
 
-    # ---------- ADD EXPENSE ----------
-
+    # Add Expense
     def add_expense(self):
-        amount = self.get_amount(
-            "Enter expense amount: Rs. "
-        )
-
-        date = self.get_date()
-
-        category = input(
-            "Enter category (Food, Travel, Rent, Shopping): "
-        ).strip().title()
-
-        description = input("Enter description: ").strip()
-
-        if category == "":
-            print("Category cannot be empty.")
-            return
-
         try:
-            expense = Expense(
-                amount, date, description, category
-            )
+            amount = float(input("Enter expense amount: Rs. "))
 
-            self.transactions.append(expense)
-            print("Expense added successfully.")
-
-            month_expenses = self.calculate_expenses(
-                date[:7]
-            )
-
-            if (
-                self.monthly_budget > 0
-                and month_expenses > self.monthly_budget
-            ):
-                print("Warning: Monthly budget exceeded!")
-
-            category_total = sum(
-                transaction.amount
-                for transaction in self.transactions
-                if isinstance(transaction, Expense)
-                and transaction.category == category
-                and transaction.date.startswith(date[:7])
-            )
-
-            limit = self.category_budgets.get(category, 0)
-
-            if limit > 0 and category_total > limit:
-                print("Warning: Category budget exceeded!")
-
-        except InvalidAmountError as error:
-            print(error)
-
-    # ---------- VIEW TRANSACTIONS ----------
-
-    def view_transactions(self):
-        if len(self.transactions) == 0:
-            print("No transactions found.")
-            return
-
-        for index, transaction in enumerate(
-            self.transactions, start=1
-        ):
-            print("\nTransaction number:", index)
-            transaction.display()
-
-    # ---------- SEARCH TRANSACTIONS ----------
-
-    def search_transactions(self):
-        keyword = input(
-            "Enter category, description, or date: "
-        ).strip().lower()
-
-        found = False
-
-        for transaction in self.transactions:
-            matches = (
-                keyword in transaction.description.lower()
-                or keyword in transaction.date.lower()
-            )
-
-            if isinstance(transaction, Expense):
-                matches = matches or (
-                    keyword in transaction.category.lower()
-                )
-
-            if isinstance(transaction, Income):
-                matches = matches or (
-                    keyword in transaction.source.lower()
-                )
-
-            if matches:
-                transaction.display()
-                found = True
-
-        if not found:
-            print("No matching transaction found.")
-
-    # ---------- UPDATE TRANSACTION ----------
-
-    def update_transaction(self):
-        self.view_transactions()
-
-        if not self.transactions:
-            return
-
-        try:
-            number = int(input(
-                "Enter transaction number to update: "
-            ))
-
-            if number < 1 or number > len(self.transactions):
-                print("Invalid transaction number.")
+            if amount <= 0:
+                print("Amount must be greater than zero.")
                 return
 
-            transaction = self.transactions[number - 1]
+            category = input("Enter category: ").strip().title()
+            description = input("Enter description: ").strip()
 
-            print("1. Update amount")
-            print("2. Update description")
-            print("3. Update date")
+            if not category or not description:
+                print("Category and description cannot be empty.")
+                return
 
-            choice = input("Enter choice: ")
+            expense = Expense(amount, category, description)
+            self.expenses.append(expense)
+
+            print("Expense added successfully!")
+
+            if (self.monthly_budget > 0
+                    and self.calculate_expenses() > self.monthly_budget):
+                print("Warning: Monthly budget exceeded!")
+
+        except ValueError:
+            print("Enter a valid amount.")
+
+    # Calculate Total Expenses
+    def calculate_expenses(self):
+        total = 0
+
+        for expense in self.expenses:
+            total += expense.amount
+
+        return total
+
+    # View Expenses
+    def view_expenses(self):
+        if not self.expenses:
+            print("No expenses found.")
+            return
+
+        for index, expense in enumerate(self.expenses, start=1):
+            print("\nExpense Number:", index)
+            expense.display()
+
+    # Update Transaction
+    def update_transaction(self):
+        if not self.expenses:
+            print("No expenses available to update.")
+            return
+
+        self.view_expenses()
+
+        try:
+            number = int(input("\nEnter expense number to update: "))
+
+            if number < 1 or number > len(self.expenses):
+                print("Invalid expense number.")
+                return
+
+            expense = self.expenses[number - 1]
+
+            print("\n1. Add Amount")
+            print("2. Update Category")
+            print("3. Update Description")
+
+            choice = input("Enter your choice: ")
 
             if choice == "1":
-                transaction.amount = self.get_amount(
-                    "Enter new amount: Rs. "
+                amount = float(
+                    input("Enter additional amount: Rs. ")
                 )
 
+                if amount <= 0:
+                    print("Amount must be greater than zero.")
+                    return
+
+                expense.amount += amount
+                print("Amount added successfully!")
+
             elif choice == "2":
-                transaction.description = input(
-                    "Enter new description: "
-                ).strip()
+                category = input("Enter new category: ").strip().title()
+
+                if not category:
+                    print("Category cannot be empty.")
+                    return
+
+                expense.category = category
+                print("Category updated successfully!")
 
             elif choice == "3":
-                transaction.date = self.get_date()
+                description = input("Enter new description: ").strip()
+
+                if not description:
+                    print("Description cannot be empty.")
+                    return
+
+                expense.description = description
+                print("Description updated successfully!")
 
             else:
                 print("Invalid choice.")
                 return
 
-            print("Transaction updated successfully.")
+            if (self.monthly_budget > 0
+                    and self.calculate_expenses() > self.monthly_budget):
+                print("Warning: Monthly budget exceeded!")
 
         except ValueError:
-            print("Please enter a valid number.")
+            print("Please enter a valid input.")
 
-    # ---------- DELETE TRANSACTION ----------
-
-    def delete_transaction(self):
-        self.view_transactions()
-
-        if not self.transactions:
-            return
-
-        try:
-            number = int(input(
-                "Enter transaction number to delete: "
-            ))
-
-            if number < 1 or number > len(self.transactions):
-                print("Invalid transaction number.")
-                return
-
-            deleted = self.transactions.pop(number - 1)
-
-            print(
-                "Deleted transaction:",
-                deleted.description
-            )
-
-        except ValueError:
-            print("Please enter a valid number.")
-
-    # ---------- SET BUDGET ----------
-
+    # Set Monthly Budget
     def set_budget(self):
-        print("\n1. Set monthly expense budget")
-        print("2. Set savings goal")
-
-        choice = input("Enter choice: ")
-
-        if choice == "1":
-            self.monthly_budget = self.get_amount(
-                "Enter monthly budget: Rs. "
-            )
-            print("Monthly budget updated.")
-
-        elif choice == "2":
-            self.savings_goal = self.get_amount(
-                "Enter savings goal: Rs. "
-            )
-            print("Savings goal updated.")
-
-        else:
-            print("Invalid choice.")
-
-    # ---------- CATEGORY BUDGET ----------
-
-    def set_category_budget(self):
-        category = input(
-            "Enter expense category: "
-        ).strip().title()
-
-        if category == "":
-            print("Category cannot be empty.")
-            return
-
-        amount = self.get_amount(
-            "Enter category budget: Rs. "
-        )
-
-        self.category_budgets[category] = amount
-
-        print("Category budget saved.")
-
-    # ---------- CALCULATE EXPENSES ----------
-
-    def calculate_expenses(self, month=None):
-        total = 0
-
-        for transaction in self.transactions:
-            if isinstance(transaction, Expense):
-                if (
-                    month is None
-                    or transaction.date.startswith(month)
-                ):
-                    total += transaction.amount
-
-        return total
-
-    # ---------- MONTHLY REPORT ----------
-
-    def monthly_report(self):
-        month = input(
-            "Enter month (YYYY-MM), or Enter for current month: "
-        ).strip()
-
-        if month == "":
-            month = datetime.today().strftime("%Y-%m")
-
         try:
-            datetime.strptime(month, "%Y-%m")
+            budget = float(input("Enter monthly budget: Rs. "))
+
+            if budget > 0:
+                self.monthly_budget = budget
+                print("Budget saved successfully!")
+            else:
+                print("Budget must be greater than zero.")
+
         except ValueError:
-            print("Invalid month format.")
-            return
+            print("Enter a valid amount.")
 
-        extra_income = sum(
-            transaction.amount
-            for transaction in self.transactions
-            if isinstance(transaction, Income)
-            and transaction.date.startswith(month)
-        )
+    # Generate Monthly Report
+    def monthly_report(self):
+        total = self.calculate_expenses()
+        balance = self.monthly_income - total
 
-        expenses = [
-            transaction
-            for transaction in self.transactions
-            if isinstance(transaction, Expense)
-            and transaction.date.startswith(month)
-        ]
+        print("\n====== MONTHLY REPORT ======")
+        print(f"Monthly Income: Rs. {self.monthly_income:.2f}")
+        print(f"Total Expenses: Rs. {total:.2f}")
+        print(f"Remaining Balance: Rs. {balance:.2f}")
 
-        total_income = self.monthly_income + extra_income
-        total_expenses = sum(
-            transaction.amount for transaction in expenses
-        )
+        if self.monthly_budget > 0:
+            print(f"Monthly Budget: Rs. {self.monthly_budget:.2f}")
 
-        balance = total_income - total_expenses
+            if total > self.monthly_budget:
+                print("Status: Budget Exceeded")
+            else:
+                print("Status: Within Budget")
 
-        print("\n========== MONTHLY REPORT ==========")
-        print("Month:", month)
-        print(f"Monthly income: Rs.{self.monthly_income:.2f}")
-        print(f"Additional income: Rs.{extra_income:.2f}")
-        print(f"Total income: Rs.{total_income:.2f}")
-        print(f"Total expenses: Rs.{total_expenses:.2f}")
-        print(f"Remaining balance: Rs.{balance:.2f}")
-
-        if total_income > 0:
-            percentage = balance / total_income * 100
-            print(f"Savings percentage: {percentage:.2f}%")
+        print("\nCategory-wise Expenses:")
 
         category_totals = {}
 
-        for expense in expenses:
+        for expense in self.expenses:
             category = expense.category
 
-            category_totals[category] = (
-                category_totals.get(category, 0)
-                + expense.amount
-            )
-
-        print("\nCategory-wise expenses:")
-
-        for category, total in sorted(
-            category_totals.items(),
-            key=lambda item: item[1],
-            reverse=True
-        ):
-            print(f"{category}: Rs.{total:.2f}")
-
-        if expenses:
-            highest = max(
-                expenses,
-                key=lambda transaction: transaction.amount
-            )
-
-            print("\nHighest expense:", highest.description)
-            print(f"Amount: Rs.{highest.amount:.2f}")
-
-        if self.savings_goal > 0:
-            if balance >= self.savings_goal:
-                print("Savings goal achieved!")
+            if category in category_totals:
+                category_totals[category] += expense.amount
             else:
-                print(
-                    "Amount needed for savings goal: "
-                    f"Rs.{self.savings_goal - balance:.2f}"
-                )
+                category_totals[category] = expense.amount
+
+        if not category_totals:
+            print("No expenses recorded.")
+        else:
+            for category, amount in category_totals.items():
+                print(f"{category}: Rs. {amount:.2f}")
 
 
-# =============== MAIN PROGRAM ===============
-
+# Main Program
 def main():
     manager = FinanceManager()
 
     while True:
-        print("\n====== SMART FINANCE MANAGER ======")
+        print("\n===== SMART FINANCE MANAGER =====")
         print("1. Set Monthly Income")
-        print("2. Add Additional Income")
-        print("3. Add Expense")
-        print("4. View Transactions")
-        print("5. Search Transactions")
-        print("6. Update Transaction")
-        print("7. Delete Transaction")
-        print("8. Set Budget or Savings Goal")
-        print("9. Set Category Budget")
-        print("10. Generate Monthly Report")
-        print("11. Exit")
+        print("2. Add Expense")
+        print("3. View Expenses")
+        print("4. Update Transaction")
+        print("5. Set Monthly Budget")
+        print("6. Generate Monthly Report")
+        print("7. Exit")
 
         try:
             choice = int(input("Enter your choice: "))
@@ -475,46 +226,31 @@ def main():
                 manager.set_income()
 
             elif choice == 2:
-                manager.add_income()
-
-            elif choice == 3:
                 manager.add_expense()
 
+            elif choice == 3:
+                manager.view_expenses()
+
             elif choice == 4:
-                manager.view_transactions()
-
-            elif choice == 5:
-                manager.search_transactions()
-
-            elif choice == 6:
                 manager.update_transaction()
 
-            elif choice == 7:
-                manager.delete_transaction()
-
-            elif choice == 8:
+            elif choice == 5:
                 manager.set_budget()
 
-            elif choice == 9:
-                manager.set_category_budget()
-
-            elif choice == 10:
+            elif choice == 6:
                 manager.monthly_report()
 
-            elif choice == 11:
+            elif choice == 7:
                 print("Thank you for using Finance Manager!")
                 break
 
             else:
-                print("Choose a number between 1 and 11.")
+                print("Choose a number between 1 and 7.")
 
         except ValueError:
-            print("Invalid input. Please enter a number.")
-
-        except KeyboardInterrupt:
-            print("\nProgram stopped.")
-            break
+            print("Enter a valid menu number.")
 
 
 if __name__ == "__main__":
     main()
+
